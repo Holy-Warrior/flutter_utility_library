@@ -68,15 +68,26 @@ class _WidgetGitReleaseCheckerState extends State<WidgetGitReleaseChecker> {
     dynamic r1 = currentRelease.replaceFirst('v', '').split('.');
     dynamic r2 = item['tag_name'].replaceFirst('v', '').split('.');
     // check change in release
-    bool isSame = true;
+    bool isNewer = false;
     for (int i = 0; i < r1.length; i++) {
-      if (r1[i] != r2[i]) {
-        isSame = false;
+      var i1 = int.parse(r1[i]);
+      var i2 = int.parse(r2[i]);
+
+      if (i2 > i1) {
+        isNewer = true;
+        break;
+      } else if (i2 == i1) {
+        continue;
+      } else {
         break;
       }
     }
 
-    data['new'] = !isSame;
+    if (isNewer == false) {
+      return false;
+    }
+
+    data['new'] = isNewer;
 
     return data;
   }
@@ -92,51 +103,55 @@ class _WidgetGitReleaseCheckerState extends State<WidgetGitReleaseChecker> {
       ),
       builder: (BuildContext context, AsyncSnapshot<dynamic> snapshot) {
         if (snapshot.hasData != false && snapshot.data['new'] == true) {
-          return Container(
-            width: double.infinity,
-            constraints: BoxConstraints(minHeight: 0),
-            decoration: BoxDecoration(
-              color: Colors.lightGreen[100],
-              border: Border.all(color: Colors.green, width: 2),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(snapshot.data['name']),
-                  Text(
-                    '${snapshot.data['version']} ${snapshot.data['new'] ? "new" : ""}',
-                  ),
-                  Text("Date Published ${snapshot.data['published_at']}"),
-                  if (snapshot.data['pre_release'])
-                    Text('This is a PreRelease version'),
-                  TextButton(
-                    onPressed: () {
-                      launchUrl(Uri.parse(snapshot.data['download_link']));
-                    },
-                    style: ButtonStyle(
-                      padding: WidgetStateProperty.all<EdgeInsets>(
-                        EdgeInsets.zero,
+          return Column(
+            children: [
+              Container(
+                width: double.infinity,
+                constraints: BoxConstraints(minHeight: 0),
+                decoration: BoxDecoration(
+                  color: Colors.lightGreen[100],
+                  border: Border.all(color: Colors.green, width: 2),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(snapshot.data['name']),
+                      Text(
+                        '${snapshot.data['version']} ${snapshot.data['new'] ? "new" : ""}',
                       ),
-                      minimumSize: WidgetStateProperty.all(Size(0, 0)),
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      alignment: Alignment.centerLeft,
-                    ),
-                    child: Text(
-                      'Download latest',
-                      style: TextStyle(
-                        decoration: TextDecoration.underline,
-                        color: Colors.blue,
+                      Text("Date Published ${snapshot.data['published_at']}"),
+                      if (snapshot.data['pre_release'])
+                        Text('This is a PreRelease version'),
+                      TextButton(
+                        onPressed: () {
+                          launchUrl(Uri.parse(snapshot.data['download_link']));
+                        },
+                        style: ButtonStyle(
+                          padding: WidgetStateProperty.all<EdgeInsets>(
+                            EdgeInsets.zero,
+                          ),
+                          minimumSize: WidgetStateProperty.all(Size(0, 0)),
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          alignment: Alignment.centerLeft,
+                        ),
+                        child: Text(
+                          'Download latest',
+                          style: TextStyle(
+                            decoration: TextDecoration.underline,
+                            color: Colors.blue,
+                          ),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
-                ],
+                ),
               ),
-            ),
+            ],
           );
         }
         // If not new, return an empty SizedBox (invisible, takes no space)
